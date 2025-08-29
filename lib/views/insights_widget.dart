@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import '../models/sunshine_provider.dart';
+import '../theme/app_theme.dart';
 
 class InsightsWidget extends StatelessWidget {
   const InsightsWidget({super.key});
@@ -30,32 +31,37 @@ class InsightsWidget extends StatelessWidget {
               ),
             )
           : provider.error.isNotEmpty
-              ? Center(
-                  child: Text(provider.error, style: const TextStyle(color: Colors.red)),
-                )
-              : Column(
-                  children: [
-                    _card(
-                      "☀️ Average Sunshine",
-                      provider.data.isNotEmpty
-                          ? "${(provider.data.map((d) => d.sunshineHours).reduce((a, b) => a + b) / provider.data.length).toStringAsFixed(2)} hours"
-                          : "0.00 hours",
-                    ),
-                    _card(
-                      "📊 Peak",
-                      provider.data.isNotEmpty
-                          ? "${provider.data.reduce((a, b) => a.sunshineHours > b.sunshineHours ? a : b).sunshineHours.toStringAsFixed(2)} hours at ${provider.data.reduce((a, b) => a.sunshineHours > b.sunshineHours ? a : b).timestamp}"
-                          : "N/A",
-                    ),
-                    FutureBuilder<double>(
-                      future: provider.fetchHistoricalAverage(),
-                      builder: (context, snap) {
-                        final txt = snap.hasData ? "${snap.data!.toStringAsFixed(2)} hours" : "Loading...";
-                        return _card("📉 Historical Average", txt);
-                      },
-                    ),
-                  ],
+          ? Center(
+              child: Text(
+                provider.error,
+                style: const TextStyle(color: AppColors.errorRed),
+              ),
+            )
+          : Column(
+              children: [
+                _card(
+                  "☀️ Average Sunshine",
+                  provider.data.isNotEmpty
+                      ? "${(provider.data.map((d) => d.sunshineHours).reduce((a, b) => a + b) / provider.data.length).toStringAsFixed(2)} hours"
+                      : "0.00 hours",
                 ),
+                _card(
+                  "📊 Peak",
+                  provider.data.isNotEmpty
+                      ? "${provider.data.reduce((a, b) => a.sunshineHours > b.sunshineHours ? a : b).sunshineHours.toStringAsFixed(2)} h at ${provider.data.reduce((a, b) => a.sunshineHours > b.sunshineHours ? a : b).timestamp}"
+                      : "N/A",
+                ),
+                FutureBuilder<double>(
+                  future: provider.fetchHistoricalAverage(),
+                  builder: (context, snap) {
+                    final txt = snap.hasData
+                        ? "${snap.data!.toStringAsFixed(2)} hours"
+                        : "Loading...";
+                    return _card("📉 Historical Average", txt);
+                  },
+                ),
+              ],
+            ),
     );
   }
 
@@ -63,8 +69,18 @@ class InsightsWidget extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: ListTile(
-        title: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-        subtitle: Text(value, style: const TextStyle(fontSize: 14)),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textDark,
+          ),
+        ),
+        subtitle: Text(
+          value,
+          style: const TextStyle(fontSize: 14, color: AppColors.textLight),
+        ),
       ),
     );
   }
