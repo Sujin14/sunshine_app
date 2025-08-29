@@ -10,7 +10,7 @@ class InsightsWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = Provider.of<SunshineProvider>(context);
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 300),
       child: provider.isLoading
           ? Shimmer.fromColors(
               baseColor: Colors.grey[300]!,
@@ -20,7 +20,7 @@ class InsightsWidget extends StatelessWidget {
                   3,
                   (_) => Container(
                     margin: const EdgeInsets.only(bottom: 12),
-                    height: 100,
+                    height: 96,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(20),
@@ -31,33 +31,27 @@ class InsightsWidget extends StatelessWidget {
             )
           : provider.error.isNotEmpty
               ? Center(
-                  child: Text(
-                    provider.error,
-                    style: const TextStyle(color: Colors.red),
-                  ),
+                  child: Text(provider.error, style: const TextStyle(color: Colors.red)),
                 )
               : Column(
                   children: [
-                    _buildCard(
-                      title: "☀️ Average Sunshine",
-                      value:
-                          "${provider.data.isNotEmpty ? (provider.data.map((d) => d.sunshineHours).reduce((a, b) => a + b) / provider.data.length).toStringAsFixed(2) : '0.00'} hours",
+                    _card(
+                      "☀️ Average Sunshine",
+                      provider.data.isNotEmpty
+                          ? "${(provider.data.map((d) => d.sunshineHours).reduce((a, b) => a + b) / provider.data.length).toStringAsFixed(2)} hours"
+                          : "0.00 hours",
                     ),
-                    _buildCard(
-                      title: "📊 Peak Hour/Day",
-                      value: provider.data.isNotEmpty
-                          ? "${provider.data.reduce((a, b) => a.sunshineHours > b.sunshineHours ? a : b).sunshineHours.toStringAsFixed(2)} hours at ${provider.data.reduce((a, b) => a.sunshineHours > b.sunshineHours ? a : b).timestamp.split(' ').last}"
+                    _card(
+                      "📊 Peak",
+                      provider.data.isNotEmpty
+                          ? "${provider.data.reduce((a, b) => a.sunshineHours > b.sunshineHours ? a : b).sunshineHours.toStringAsFixed(2)} hours at ${provider.data.reduce((a, b) => a.sunshineHours > b.sunshineHours ? a : b).timestamp}"
                           : "N/A",
                     ),
                     FutureBuilder<double>(
                       future: provider.fetchHistoricalAverage(),
-                      builder: (context, snapshot) {
-                        return _buildCard(
-                          title: "📉 Historical Average",
-                          value: snapshot.hasData
-                              ? "${snapshot.data!.toStringAsFixed(2)} hours"
-                              : "Loading...",
-                        );
+                      builder: (context, snap) {
+                        final txt = snap.hasData ? "${snap.data!.toStringAsFixed(2)} hours" : "Loading...";
+                        return _card("📉 Historical Average", txt);
                       },
                     ),
                   ],
@@ -65,22 +59,12 @@ class InsightsWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildCard({required String title, required String value}) {
+  Widget _card(String title, String value) {
     return Card(
-      elevation: 6,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      color: Colors.white.withOpacity(0.9),
       margin: const EdgeInsets.only(bottom: 16),
       child: ListTile(
-        title: Text(
-          title,
-          style: const TextStyle(
-              fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black87),
-        ),
-        subtitle: Text(
-          value,
-          style: const TextStyle(fontSize: 14, color: Colors.black54),
-        ),
+        title: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+        subtitle: Text(value, style: const TextStyle(fontSize: 14)),
       ),
     );
   }

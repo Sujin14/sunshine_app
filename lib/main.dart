@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'models/sunshine_provider.dart';
 import 'views/sunshine_page.dart';
@@ -6,28 +7,25 @@ import 'views/sunshine_page.dart';
 void main() {
   runApp(
     ChangeNotifierProvider(
-      create: (context) => SunshineProvider()..fetchData(),
+      create: (_) => SunshineProvider(),
       child: const MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Sunshine Insights',
+      title: 'Sunshine App',
       theme: ThemeData(
-        primaryColor: const Color(0xFFFFD700),
-        scaffoldBackgroundColor: Colors.transparent,
-        fontFamily: 'Roboto',
-        cardTheme: CardThemeData(
-          elevation: 4,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textTheme: GoogleFonts.robotoTextTheme().apply(
+          fontFamilyFallback: const ['NotoSans'],
         ),
+        useMaterial3: true,
       ),
       home: const SunshinePage(),
     );

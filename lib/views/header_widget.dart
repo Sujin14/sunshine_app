@@ -2,24 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class HeaderWidget extends StatelessWidget {
-  const HeaderWidget({Key? key}) : super(key: key);
+  const HeaderWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 8,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      color: Colors.white.withOpacity(0.9),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Flexible(
-              flex: 2,
+            const Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
                     '☀️ Sunshine Insights',
                     style: TextStyle(
@@ -36,13 +32,10 @@ class HeaderWidget extends StatelessWidget {
                 ],
               ),
             ),
-            Flexible(
-              flex: 1,
-              child: Text(
-                'Updated: ${DateFormat('MMM dd, yyyy').format(DateTime.now())}',
-                style: const TextStyle(fontSize: 13, color: Color(0xFF666666)),
-                textAlign: TextAlign.right,
-              ),
+            Text(
+              'Updated: ${DateFormat('MMM dd, yyyy').format(DateTime.now())}',
+              style: const TextStyle(fontSize: 13, color: Color(0xFF666666)),
+              textAlign: TextAlign.right,
             ),
           ],
         ),

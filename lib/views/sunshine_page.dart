@@ -13,61 +13,59 @@ class SunshinePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<SunshineProvider>(context);
+
     return Scaffold(
-      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          AnimatedContainer(
-            duration: const Duration(seconds: 1),
-            child: CustomPaint(
-              size: Size.infinite,
-              painter: SkyBackgroundPainter(provider.selectedHour),
-            ),
-          ),
-          SingleChildScrollView(
+          /// Dynamic sky + sun + clouds
+          AnimatedSkyBackground(selectedHour: provider.selectedHour),
+
+          /// Content
+          SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16.0),
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   bool isMobile = constraints.maxWidth < 600;
-                  return isMobile
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            HeaderWidget(),
-                            SizedBox(height: 20),
-                            ControlsWidget(),
-                            SizedBox(height: 20),
-                            VisualizationWidget(),
-                            SizedBox(height: 20),
-                            InsightsWidget(),
-                          ],
-                        )
-                      : Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              width: 250,
-                              child: Column(
-                                children: const [
-                                  HeaderWidget(),
-                                  SizedBox(height: 20),
-                                  ControlsWidget(),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 24),
-                            Expanded(
-                              flex: 3,
-                              child: VisualizationWidget(),
-                            ),
-                            const SizedBox(width: 24),
-                            Expanded(
-                              flex: 2,
-                              child: InsightsWidget(),
-                            ),
-                          ],
-                        );
+
+                  if (isMobile) {
+                    /// ✅ Mobile → Scrollable column
+                    return ListView(
+                      shrinkWrap: true,
+                      physics: const ClampingScrollPhysics(),
+                      children: const [
+                        HeaderWidget(),
+                        SizedBox(height: 16),
+                        ControlsWidget(),
+                        SizedBox(height: 16),
+                        VisualizationWidget(),
+                        SizedBox(height: 16),
+                        InsightsWidget(),
+                      ],
+                    );
+                  } else {
+                    /// ✅ Web/Desktop → Row with side controls
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 220,
+                          child: ListView(
+                            shrinkWrap: true,
+                            children: const [
+                              HeaderWidget(),
+                              SizedBox(height: 16),
+                              ControlsWidget(),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(flex: 3, child: const VisualizationWidget()),
+                        const SizedBox(width: 16),
+                        Expanded(flex: 2, child: const InsightsWidget()),
+                      ],
+                    );
+                  }
                 },
               ),
             ),
