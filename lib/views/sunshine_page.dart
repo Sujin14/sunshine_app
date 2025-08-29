@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'controls_widget.dart';
 import 'header_widget.dart';
-import 'sky_background_painter.dart';
+import 'animated_sky_background_painter.dart';
 import 'visualization_widget.dart';
 import 'insights_widget.dart';
 
@@ -13,7 +13,7 @@ class SunshinePage extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          const AnimatedSkyBackground(), // ✅ dynamic background
+          const AnimatedSkyBackground(),
 
           SafeArea(
             child: Padding(

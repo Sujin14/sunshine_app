@@ -1,4 +1,3 @@
-// lib/widgets/glass_card.dart
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
@@ -10,17 +9,16 @@ class GlassCard extends StatelessWidget {
   final BorderRadiusGeometry borderRadius;
 
   const GlassCard({
-    Key? key,
+    super.key,
     required this.child,
     this.blur = 8.0,
     this.opacity = 0.12,
     this.padding = const EdgeInsets.all(12),
     this.borderRadius = const BorderRadius.all(Radius.circular(16)),
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Use scaffold background as base so cards blend with dynamic sky
     final base = Theme.of(context).scaffoldBackgroundColor;
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),

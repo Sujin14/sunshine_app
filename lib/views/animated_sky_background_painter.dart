@@ -1,4 +1,3 @@
-// lib/views/animated_sky_background.dart
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -279,7 +278,7 @@ class _SkyPainter extends CustomPainter {
       old.fractionalHour != fractionalHour || old.tick != tick;
 }
 
-/// Represents a single star
+// Represents a single star
 class _Star {
   final double dx;
   final double dy;

@@ -6,7 +6,7 @@ import '../theme/app_theme.dart';
 import 'glass_card.dart';
 
 class ControlsWidget extends StatelessWidget {
-  const ControlsWidget({Key? key}) : super(key: key);
+  const ControlsWidget({super.key});
 
   @override
   Widget build(BuildContext context) {

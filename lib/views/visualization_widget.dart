@@ -1,9 +1,9 @@
-// lib/views/visualization_widget.dart
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 import '../models/sunshine_provider.dart';
 import '../theme/app_theme.dart';
 import 'glass_card.dart';
@@ -32,10 +32,17 @@ class _VisualizationWidgetState extends State<VisualizationWidget> {
     final provider = Provider.of<SunshineProvider>(context);
 
     if (provider.isLoading) {
-      return const GlassCard(
-        child: SizedBox(
-          height: 340,
-          child: Center(child: CircularProgressIndicator()),
+      return GlassCard(
+        child: Shimmer.fromColors(
+          baseColor: Colors.grey[300]!,
+          highlightColor: Colors.grey[100]!,
+          child: Container(
+            height: 340,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
         ),
       );
     }
@@ -55,7 +62,7 @@ class _VisualizationWidgetState extends State<VisualizationWidget> {
     }
 
     final barsCount = provider.data.length;
-    final perBar = 44.0; // width per bar/point
+    final perBar = 44.0;
     final totalWidth = max(
       barsCount * perBar,
       MediaQuery.of(context).size.width - 72,
@@ -79,7 +86,7 @@ class _VisualizationWidgetState extends State<VisualizationWidget> {
                       fontWeight: FontWeight.w700,
                       color: AppColors.textDark,
                     ),
-                    overflow: TextOverflow.ellipsis, // ✅ prevent overflow
+                    overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                   ),
                 ),
@@ -107,7 +114,7 @@ class _VisualizationWidgetState extends State<VisualizationWidget> {
 
             const SizedBox(height: 12),
 
-            // ✅ Chart with horizontal scroll + visible scrollbar
+            // Chart with horizontal scroll + visible scrollbar
             SizedBox(
               height: provider.data.isEmpty ? 120 : 280,
               child: ScrollConfiguration(
@@ -119,8 +126,7 @@ class _VisualizationWidgetState extends State<VisualizationWidget> {
                 ),
                 child: Scrollbar(
                   controller: _scrollController,
-                  thumbVisibility:
-                      true, // 👈 ensures scrollbar is visible on web
+                  thumbVisibility: true,
                   thickness: 8,
                   radius: const Radius.circular(8),
                   child: SingleChildScrollView(
