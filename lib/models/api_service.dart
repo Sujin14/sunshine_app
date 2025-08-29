@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/sunshine_data.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:8000';
+  static const String baseUrl = 'https://sunshine-backend-0qhd.onrender.com';
 
   Future<List<SunshineData>> fetchHourlyData(String date) async {
     final r = await http.get(Uri.parse('$baseUrl/sunshine/hourly?date=$date'));
