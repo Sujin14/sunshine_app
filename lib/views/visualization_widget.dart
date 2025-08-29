@@ -56,7 +56,10 @@ class _VisualizationWidgetState extends State<VisualizationWidget> {
 
     final barsCount = provider.data.length;
     final perBar = 44.0; // width per bar/point
-    final totalWidth = max(barsCount * perBar, MediaQuery.of(context).size.width - 72);
+    final totalWidth = max(
+      barsCount * perBar,
+      MediaQuery.of(context).size.width - 72,
+    );
 
     return GlassCard(
       child: Padding(
@@ -68,12 +71,16 @@ class _VisualizationWidgetState extends State<VisualizationWidget> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  _title(provider.viewMode),
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textDark,
+                Flexible(
+                  child: Text(
+                    _title(provider.viewMode),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textDark,
+                    ),
+                    overflow: TextOverflow.ellipsis, // ✅ prevent overflow
+                    maxLines: 1,
                   ),
                 ),
                 ToggleButtons(
@@ -97,6 +104,7 @@ class _VisualizationWidgetState extends State<VisualizationWidget> {
                 ),
               ],
             ),
+
             const SizedBox(height: 12),
 
             // ✅ Chart with horizontal scroll + visible scrollbar
@@ -111,7 +119,8 @@ class _VisualizationWidgetState extends State<VisualizationWidget> {
                 ),
                 child: Scrollbar(
                   controller: _scrollController,
-                  thumbVisibility: true, // 👈 ensures scrollbar is visible on web
+                  thumbVisibility:
+                      true, // 👈 ensures scrollbar is visible on web
                   thickness: 8,
                   radius: const Radius.circular(8),
                   child: SingleChildScrollView(

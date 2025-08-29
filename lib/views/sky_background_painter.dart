@@ -32,16 +32,11 @@ class _AnimatedSkyBackgroundState extends State<AnimatedSkyBackground>
     super.dispose();
   }
 
-  // Returns fractional hour (0..24). If provider has a selectedHour and viewMode is Hourly,
-  // prefer that (so tapping a bar updates the sky). Otherwise use wall clock.
   double _fractionalHour(BuildContext context) {
     try {
       final provider = Provider.of<SunshineProvider>(context, listen: false);
-      // Use selected hour as whole-hour fractional (no minute precision)
       return provider.selectedHour.toDouble().clamp(0.0, 23.9999);
-    } catch (_) {
-      // ignore if provider not available
-    }
+    } catch (_) {}
     final now = DateTime.now();
     return now.hour + now.minute / 60.0 + now.second / 3600.0;
   }
@@ -62,20 +57,36 @@ class _AnimatedSkyBackgroundState extends State<AnimatedSkyBackground>
 }
 
 class _SkyPainter extends CustomPainter {
-  final double fractionalHour; // 0..24
-  final double tick; // 0..1 animation tick for clouds/rays
+  final double fractionalHour;
+  final double tick;
+  final List<_Star> _stars;
 
-  _SkyPainter(this.fractionalHour, this.tick);
+  _SkyPainter(this.fractionalHour, this.tick)
+    : _stars = List.generate(60, (i) {
+        final rand = Random(i);
+        return _Star(
+          dx: rand.nextDouble(),
+          dy: rand.nextDouble() * 0.6, // top 60% only
+          radius: rand.nextDouble() * 1.6 + 0.6,
+          phase: rand.nextDouble() * 2 * pi,
+        );
+      });
 
   @override
   void paint(Canvas canvas, Size size) {
     _drawSky(canvas, size);
-    _drawSun(canvas, size);
-    _drawClouds(canvas, size);
+
+    final hour = fractionalHour % 24;
+    if (hour >= 5 && hour < 18) {
+      _drawSun(canvas, size);
+      _drawClouds(canvas, size);
+    } else {
+      _drawMoon(canvas, size);
+      _drawStars(canvas, size);
+    }
   }
 
   void _drawSky(Canvas canvas, Size size) {
-    // Interpolate between current hour and next hour for smooth gradient transition
     final left = fractionalHour.floor().toInt() % 24;
     final right = (left + 1) % 24;
     final t = fractionalHour - fractionalHour.floor();
@@ -83,7 +94,6 @@ class _SkyPainter extends CustomPainter {
     final g1 = _skyGradientForHour(left);
     final g2 = _skyGradientForHour(right);
 
-    // Interpolate list of stops (use shorter list length)
     final stops = max(g1.length, g2.length);
     final colors = List<Color>.generate(stops, (i) {
       final c1 = i < g1.length ? g1[i] : g1.last;
@@ -105,20 +115,17 @@ class _SkyPainter extends CustomPainter {
   }
 
   void _drawSun(Canvas canvas, Size size) {
-    // Map daylight hours 7..19 to horizontal path 0.2..0.8
     double hour = fractionalHour.clamp(0.0, 23.9999);
     final mapped = ((hour - 7) / 12).clamp(0.0, 1.0);
     final x = lerpDouble(size.width * 0.2, size.width * 0.8, mapped)!;
 
-    // Parabolic vertical path (top at midday)
     final yTop = size.height * 0.12;
     final yMid = size.height * 0.48;
-    final curve = 1 - pow((2 * mapped - 1).abs(), 2); // smoother parabola
+    final curve = 1 - pow((2 * mapped - 1).abs(), 2);
     final y = yMid - curve * (yMid - yTop);
 
     final center = Offset(x, y);
 
-    // Glow
     final glowPaint = Paint()
       ..shader = RadialGradient(
         colors: [
@@ -129,11 +136,9 @@ class _SkyPainter extends CustomPainter {
       ).createShader(Rect.fromCircle(center: center, radius: 100));
     canvas.drawCircle(center, 100, glowPaint);
 
-    // Sun body
     final sunPaint = Paint()..color = AppColors.sunshineYellow;
     canvas.drawCircle(center, 30, sunPaint);
 
-    // Rays (rotate slowly using tick)
     final rayPaint = Paint()
       ..color = AppColors.sunshineAmber.withOpacity(0.95)
       ..strokeWidth = 3
@@ -155,8 +160,35 @@ class _SkyPainter extends CustomPainter {
     }
   }
 
+  void _drawMoon(Canvas canvas, Size size) {
+    final x = size.width * 0.7;
+    final y = size.height * 0.25;
+    final center = Offset(x, y);
+
+    final moonPaint = Paint()..color = Colors.grey.shade300;
+    canvas.drawCircle(center, 26, moonPaint);
+
+    // Crescent effect
+    final cutoutPaint = Paint()..color = Colors.black.withOpacity(0.85);
+    canvas.drawCircle(center.translate(10, 0), 26, cutoutPaint);
+  }
+
+  void _drawStars(Canvas canvas, Size size) {
+    for (final star in _stars) {
+      // twinkle between 0.5–1.0 opacity
+      final opacity =
+          0.5 +
+          0.5 * sin(2 * pi * tick * 2 + star.phase); // twinkle ~2 cycles/min
+      final paint = Paint()..color = Colors.white.withOpacity(opacity);
+      canvas.drawCircle(
+        Offset(star.dx * size.width, star.dy * size.height),
+        star.radius,
+        paint,
+      );
+    }
+  }
+
   void _drawClouds(Canvas canvas, Size size) {
-    // Drift offset (-..+)
     final drift = (tick - 0.5) * size.width * 0.18;
     final paint = Paint()..color = Colors.white.withOpacity(0.9);
 
@@ -204,33 +236,40 @@ class _SkyPainter extends CustomPainter {
         ),
       )
       ..addOval(Rect.fromCenter(center: pos, width: s * 1.35, height: s * 0.9));
-    // soft shadow
     canvas.drawShadow(path, Colors.black.withOpacity(0.14), 8, false);
     canvas.drawPath(path, paint);
   }
 
   List<Color> _skyGradientForHour(int hour) {
-    // Use richer multi-stop gradients mapped to morning/noon/evening
-    if (hour >= 6 && hour < 12) {
-      // Morning
+    if (hour >= 0 && hour < 5) {
       return [
-        const Color(0xFFFFE0B2),
-        const Color(0xFFFFF3E0),
-        const Color(0xFFFCEFE6),
+        Colors.black,
+        const Color.fromARGB(255, 69, 69, 69),
+        const Color.fromARGB(255, 51, 50, 50).withOpacity(0.05),
       ];
-    } else if (hour >= 12 && hour < 18) {
-      // Noon
+    } else if (hour >= 5 && hour < 9) {
       return [
-        AppColors.sunshineBlue,
-        const Color(0xFF4FC3F7),
-        AppColors.sunshineDeepBlue,
+        const Color(0xFFFFC371),
+        const Color(0xFFFFE0B2),
+        const Color(0xFFFFF8E1),
+      ];
+    } else if (hour >= 9 && hour < 15) {
+      return [
+        const Color(0xFF64B5F6),
+        const Color(0xFF42A5F5),
+        const Color(0xFF1976D2),
+      ];
+    } else if (hour >= 15 && hour < 18) {
+      return [
+        const Color(0xFFFFB74D),
+        const Color(0xFFFF8A65),
+        const Color(0xFFF48FB1),
       ];
     } else {
-      // Evening / warm
       return [
-        const Color(0xFFFFCC80),
-        const Color(0xFFFFAB91),
-        const Color(0xFFCE93D8),
+        Colors.black,
+        const Color.fromARGB(255, 69, 69, 69),
+        const Color.fromARGB(255, 51, 50, 50).withOpacity(0.05),
       ];
     }
   }
@@ -238,4 +277,18 @@ class _SkyPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _SkyPainter old) =>
       old.fractionalHour != fractionalHour || old.tick != tick;
+}
+
+/// Represents a single star
+class _Star {
+  final double dx;
+  final double dy;
+  final double radius;
+  final double phase;
+  _Star({
+    required this.dx,
+    required this.dy,
+    required this.radius,
+    required this.phase,
+  });
 }
