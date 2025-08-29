@@ -1,5 +1,6 @@
 // lib/views/visualization_widget.dart
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
@@ -18,6 +19,13 @@ class VisualizationWidget extends StatefulWidget {
 
 class _VisualizationWidgetState extends State<VisualizationWidget> {
   ChartMode mode = ChartMode.bar;
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,9 +55,8 @@ class _VisualizationWidgetState extends State<VisualizationWidget> {
     }
 
     final barsCount = provider.data.length;
-    final minChartWidth = MediaQuery.of(context).size.width - 72;
-    final perBar = 44.0;
-    final totalWidth = max(barsCount * perBar, minChartWidth);
+    final perBar = 44.0; // width per bar/point
+    final totalWidth = max(barsCount * perBar, MediaQuery.of(context).size.width - 72);
 
     return GlassCard(
       child: Padding(
@@ -57,61 +64,74 @@ class _VisualizationWidgetState extends State<VisualizationWidget> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ header + mode toggle (responsive fix applied)
+            // header + mode toggle
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: Text(
-                    _title(provider.viewMode),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textDark,
-                    ),
-                    overflow: TextOverflow.ellipsis, // prevent overflow
+                Text(
+                  _title(provider.viewMode),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textDark,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: ToggleButtons(
-                    isSelected: [
-                      mode == ChartMode.bar,
-                      mode == ChartMode.line,
-                    ],
-                    onPressed: (i) => setState(
-                      () => mode = i == 0 ? ChartMode.bar : ChartMode.line,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    fillColor: Colors.white.withOpacity(0.08),
-                    selectedBorderColor: Colors.white.withOpacity(0.06),
-                    children: const [
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8),
-                        child: Icon(Icons.bar_chart, size: 20),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8),
-                        child: Icon(Icons.show_chart, size: 20),
-                      ),
-                    ],
+                ToggleButtons(
+                  isSelected: [mode == ChartMode.bar, mode == ChartMode.line],
+                  onPressed: (i) => setState(
+                    () => mode = i == 0 ? ChartMode.bar : ChartMode.line,
                   ),
+                  borderRadius: BorderRadius.circular(12),
+                  fillColor: Colors.white.withOpacity(0.08),
+                  selectedBorderColor: Colors.white.withOpacity(0.06),
+                  children: const [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Icon(Icons.bar_chart),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Icon(Icons.show_chart),
+                    ),
+                  ],
                 ),
               ],
             ),
             const SizedBox(height: 12),
 
-            // ✅ scrollable chart (horizontal when needed)
+            // ✅ Chart with horizontal scroll + visible scrollbar
             SizedBox(
               height: provider.data.isEmpty ? 120 : 280,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SizedBox(
-                  width: totalWidth,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 400),
-                    child: mode == ChartMode.bar
-                        ? _buildBarChart(provider)
-                        : _buildLineChart(provider),
+              child: ScrollConfiguration(
+                behavior: ScrollConfiguration.of(context).copyWith(
+                  dragDevices: {
+                    PointerDeviceKind.touch,
+                    PointerDeviceKind.mouse,
+                  },
+                ),
+                child: Scrollbar(
+                  controller: _scrollController,
+                  thumbVisibility: true, // 👈 ensures scrollbar is visible on web
+                  thickness: 8,
+                  radius: const Radius.circular(8),
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    scrollDirection: Axis.horizontal,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: MediaQuery.of(context).size.width - 72,
+                        maxWidth: totalWidth,
+                      ),
+                      child: SizedBox(
+                        width: totalWidth,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 400),
+                          child: mode == ChartMode.bar
+                              ? _buildBarChart(provider)
+                              : _buildLineChart(provider),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
